@@ -1,0 +1,2 @@
+# Contributor tooling only. The installed scanner uses the standard library.
+PyYAML>=6.0,<7

@@ -1,0 +1,51 @@
+name: Validate skill
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.14']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python tools/validate.py
+      - run: python -m unittest discover -s tests -v
+
+  install:
+    runs-on: ubuntu-latest
+    env:
+      DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.10'
+      - name: Discover and install into a temporary project
+        shell: bash
+        run: |
+          npx --yes skills@1.7.4 add "$GITHUB_WORKSPACE" --list
+          project=$(mktemp -d)
+          cd "$project"
+          npx --yes skills@1.7.4 add "$GITHUB_WORKSPACE" --skill workofart --agent claude-code --copy -y
+          test -f .claude/skills/workofart/SKILL.md
+          test -f .claude/skills/workofart/LICENSE
+          test -f .claude/skills/workofart/references/tells.md
+          test ! -d .claude/skills/workofart/docs
+          test ! -d .claude/skills/workofart/video
+          printf '.card:hover { transform: translateY(-4px); }\n' > site.css
+          python .claude/skills/workofart/scripts/scan.py site.css --json > result.json
+          python -c 'import json; r=json.load(open("result.json")); assert any(h["tell"] == "HOV-1" for h in r["hits"])'

@@ -1,0 +1,16 @@
+# Python development
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local credentials and settings
+.env
+.env.*
+!.env.example
+
+# Marketing originals, recordings, exports, and validation scratch files
+/.local/
+
+# Operating system files
+.DS_Store
+Thumbs.db
